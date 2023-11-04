@@ -1,11 +1,20 @@
 use axum::{
     routing::get,
-    Router,
+    Router, extract::Query, http::StatusCode, response::IntoResponse,
 };
-use std::net::SocketAddr;
+use cloud_storage::Client;
+use serde::Deserialize;
+use std::{net::SocketAddr, env};
+use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+    let key = "SERVICE_ACCOUNT";
+    match env::var(key) {
+        Ok(val) => println!("{}: {:?}", key, val),
+        Err(e) => println!("couldn't interpret {}: {}", key, e)
+    }
     // アプリケーションのルーターを構築します。
     let app = Router::new().route("/storage", get(storage_handler));
 
@@ -21,7 +30,19 @@ async fn main() {
         .unwrap();
 }
 
+#[derive(Deserialize)]
+struct StorageQuery {
+    bucket: String,
+    object: String,
+}
+
 // `/storage` パスのリクエストハンドラです。
-async fn storage_handler() -> &'static str {
-    "This is the storage page"
+async fn storage_handler(Query(query): Query<StorageQuery>) -> impl IntoResponse {
+    let client = Client::default();
+
+    // 指定されたバケットとオブジェクトでデータを読み込みます。
+    match client.object().download(&query.bucket, &query.object).await {
+        Ok(bytes) => (StatusCode::OK, bytes),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read object".into()),
+    }
 }
