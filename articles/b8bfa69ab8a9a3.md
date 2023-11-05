@@ -2,34 +2,38 @@
 title: "Rust vs. Go: Building & Comparing REST APIs for Cloud Storage"
 emoji: "🚀"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["rust", "go", "googlecloudstorage"]
+topics: ["rust", "go", "googlecloud", "gcs", "devcontainer"]
 published: false
 ---
-Rust の Production での実装について、他社の利用状況を見ると、Web App に導入していけそう。
+Rust の Production での実装について、他社の利用状況を見ると、web app に導入していけそう。2023年11月時点。
 
-あとの問題は、team や会社の skill set をどうするか。Ops できるか。
+Rust の syntax になれるため、Rust を Go に書き直す。双方を関連付けて覚えていく。
 
-Cloud Functions など、runtime に依存するものはまだ動かせない。Cloud Run など container service では動かせる。
+Rust の課題は、組織。team や会社の skill set をどうするか。まだ、自分の周りでは、キャズムを超えていないため、ops が問題になり得る。
 
-microservices 関連で考えると、Otel への対応が気になる。dependencies に追加することで実装は可能かもしれない。この辺りは別途検証したい。
+また、`Cloud Functions` など、言語に依存するものはまだ動かせない。`Cloud Run` など container service では動かせる。
 
-まだまだ、ecosystem は不足している部分はある。今後の Rust ecosystem に期待。
+microservices 関連で考えると、`OpenTelemetry`（Otel）への対応が気になる。`dependencies` に追加することで実装は可能かもしれない。この辺りは別途検証したい。
 
-Rust の Code を流用する場合は、dependencies のチェックが必要。変なものが紛れていないか。
+一方で、まだまだ、ecosystem は不足している部分はある。今後の Rust ecosystem の進化に期待。
+
+気をつける点として、`dependencies` のチェックが必要。変なものが紛れていないか。
 
 ## 課題
-1. state を扱う API にしたい。
-1. 業務で使うような 外部の API を call するものが良い。
+- state を扱う API にしたい。
+- 業務で使うような 外部の API を call するものが良い。
 
-上記の理由で、Cloud Storage を操作する API を Rust と Go で実装し、比較する。
+上記の要件に合致するものとして、今回は `Cloud Storage` を操作する API を Rust と Go で実装し、比較する。
 
-Rust/Go の API をスラスラ書けるようになるように、繰り返し書いて身につける。
+Rust/Go の API をスラスラ書けるようになるように、繰り返し書いて身につける。特に、HTTP Server は、どこでも使うため。
 
 コードはこちら。
 
 https://github.com/danny-yamamoto/rust-api-samples
 
-## Rust
+https://github.com/danny-yamamoto/go-api-samples
+
+## Rust Web Server: /storage
 ```rust
 use axum::{
     routing::get,
@@ -102,6 +106,94 @@ storage_handler 関数はStorageQueryをクエリパラメータとして受け�
 > 
 > このコードを実行するには、事前にRustの環境設定が必要で、必要な依存関係をCargo.tomlに追加し、Google Cloud Storageへの認証情報が必要です（これは環境変数経由で渡されます）。また、適切な.envファイルまたは環境変数の設定も必要です。
 
-## Go
-```golang
+## Rust to Go Conversion
+```go
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+
+	"google.golang.org/api/option"
+	"google.golang.org/api/storage/v1"
+)
+
+type StorageQuery struct {
+	Bucket string `json:"bucket"`
+	Object string `json:"object"`
+}
+
+type StorageResponse struct {
+	Content string `json:"content"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func (h *Handler) storageHandler(w http.ResponseWriter, r *http.Request) {
+	bucket := r.URL.Query().Get("bucket")
+	object := r.URL.Query().Get("object")
+
+	rc, err := h.client.Objects.Get(bucket, object).Download()
+	if err != nil {
+		respondWithError(w, fmt.Sprintf("Failed to read object: %v", err))
+		return
+	}
+	defer rc.Body.Close()
+
+	data, err := io.ReadAll(rc.Body)
+	if err != nil {
+		respondWithError(w, fmt.Sprintf("Failed to read object data: %v", err))
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, StorageResponse{Content: string(data)})
+}
+
+func respondWithJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(response)
+}
+
+func respondWithError(w http.ResponseWriter, message string) {
+	respondWithJSON(w, http.StatusInternalServerError, ErrorResponse{Error: message})
+}
+
+type Handler struct {
+	client *storage.Service
+}
+
+func NewHandler(client *storage.Service) *Handler {
+	return &Handler{client: client}
+}
+
+func main() {
+	ctx := context.Background()
+	client, err := storage.NewService(ctx, option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")))
+	if err != nil {
+		fmt.Printf("Failed to create client: %s", err)
+		return
+	}
+
+	handler := NewHandler(client)
+	http.HandleFunc("/storage", handler.storageHandler)
+
+	port := "8080"
+	if fromEnv := os.Getenv("PORT"); fromEnv != "" {
+		port = fromEnv
+	}
+
+	addr := fmt.Sprintf("0.0.0.0:%s", port)
+	fmt.Printf("Listening on http://%s\n", addr)
+
+	log.Fatal(http.ListenAndServe(addr, nil))
+}
 ```
