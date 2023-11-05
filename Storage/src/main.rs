@@ -36,11 +36,6 @@ struct StorageResponse {
     content: String,
 }
 
-#[derive(Serialize)]
-struct ErrorResponse {
-    error: String,
-}
-
 async fn storage_handler(Query(query): Query<StorageQuery>) -> impl IntoResponse {
     let client = Client::default();
 
