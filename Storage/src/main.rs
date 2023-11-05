@@ -1,9 +1,10 @@
 use axum::{
     routing::get,
-    Router, extract::Query, http::StatusCode, response::IntoResponse,
+    Router, extract::Query, http::StatusCode, response::IntoResponse, Json,
 };
 use cloud_storage::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
 use std::{net::SocketAddr, env};
 use dotenv::dotenv;
 
@@ -15,15 +16,9 @@ async fn main() {
         Ok(val) => println!("{}: {:?}", key, val),
         Err(e) => println!("couldn't interpret {}: {}", key, e)
     }
-    // アプリケーションのルーターを構築します。
     let app = Router::new().route("/storage", get(storage_handler));
-
-    // サーバーのアドレスを設定します。
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
-
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     println!("Listening on http://{}", addr);
-
-    // サーバーを起動します。
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
@@ -36,13 +31,29 @@ struct StorageQuery {
     object: String,
 }
 
-// `/storage` パスのリクエストハンドラです。
+#[derive(Serialize)]
+struct StorageResponse {
+    content: String,
+}
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    error: String,
+}
+
 async fn storage_handler(Query(query): Query<StorageQuery>) -> impl IntoResponse {
     let client = Client::default();
 
-    // 指定されたバケットとオブジェクトでデータを読み込みます。
     match client.object().download(&query.bucket, &query.object).await {
-        Ok(bytes) => (StatusCode::OK, bytes),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to read object".into()),
+        Ok(bytes) => {
+            let content = String::from_utf8_lossy(&bytes);
+            let response = StorageResponse { content: content.to_string() };
+            (StatusCode::OK, Json(response))
+        },
+        Err(error) => {
+            let error_message = format!("Failed to read object: {}", error);
+            let response = StorageResponse { content: error_message };
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+        },
     }
 }
