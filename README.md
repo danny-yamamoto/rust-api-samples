@@ -30,3 +30,6 @@ vscode ➜ /workspaces/rust-api-samples (main) $
 ## note
 - `impl` の用法
 - `toko` の用法
+- `Serialize` / `Deserialize`
+- `async` の用法
+- response での struct の用法
