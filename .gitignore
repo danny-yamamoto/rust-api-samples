@@ -19,3 +19,4 @@ key.json
 
 local.db*
 *.sql
+.sqlx
