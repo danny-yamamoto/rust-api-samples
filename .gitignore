@@ -16,3 +16,6 @@ Cargo.lock
 .env
 
 key.json
+
+local.db*
+*.sql
