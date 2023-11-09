@@ -33,3 +33,5 @@ vscode ➜ /workspaces/rust-api-samples (main) $
 - `Serialize` / `Deserialize`
 - `async` の用法
 - response での struct の用法
+- `Router` の `get` は HTTP Method
+- response の JsonRejection
