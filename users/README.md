@@ -11,6 +11,12 @@ sqlx migrate add -r create_table
 sqlx migrate run --database-url sqlite:./local.db
 ```
 
+```bash
+export DATABASE_URL="sqlite:./local.db"
+echo $DATABASE_URL
+```
+
+
 ```sql
 vscode ➜ /workspaces/rust-api-samples/users (main) $ sqlite3 local.db
 SQLite version 3.34.1 2021-01-20 14:10:07
@@ -43,3 +49,8 @@ DROP TABLE IF EXISTS users;
 ```bash
 curl "localhost:8080/users?user_id=1" -i
 ```
+
+# note
+- `i64` の理由
+- `IntoResponse` の使い方
+- `cargo sqlx prepare --database-url "sqlite:./local.db"` の意味
