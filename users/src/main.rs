@@ -36,7 +36,7 @@ async fn main() {
     let db_url = env::var(key).unwrap_or_else(|_| String::from("sqlite:./local.db"));
     println!("db_url: {}", db_url);
 
-    let pool = SqlitePool::connect(&db_url).await.expect("Failed to create pool.");
+    let pool = SqlitePool::connect(&db_url).await.expect("Failed to create pool!");
     let shared_pool = Arc::new(pool);
 
     let app = Router::new()
