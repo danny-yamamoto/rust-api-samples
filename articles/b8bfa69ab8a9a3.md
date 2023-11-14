@@ -34,7 +34,30 @@ https://github.com/danny-yamamoto/rust-api-samples
 https://github.com/danny-yamamoto/go-api-samples
 
 ## Rust Web Server: /storage
-```rust
+実装の手順
+1. Requestの構造体 `StorageQuery` を書く
+1. Response の構造体 `StorageResponse` を書く
+1. handler を書く。download と `IntoResponse` 以外。
+1. `main` を書く
+1. handler の download と `IntoResponse` を書く。
+
+```toml:Cargo.toml
+[package]
+name = "storage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rand = "0.8.5"
+axum = "0.6.20"
+tokio = { version = "1.33.0", features = ["full"] }
+cloud-storage = "0.11.1"
+serde = { version = "1.0.190", features = ["derive"] }
+dotenv = "0.15.0"
+serde_json = "1.0.108"
+```
+
+```rust:main.rs
 use axum::{
     routing::get,
     Router, extract::Query, http::StatusCode, response::IntoResponse, Json,
@@ -107,6 +130,15 @@ storage_handler 関数はStorageQueryをクエリパラメータとして受け�
 > このコードを実行するには、事前にRustの環境設定が必要で、必要な依存関係をCargo.tomlに追加し、Google Cloud Storageへの認証情報が必要です（これは環境変数経由で渡されます）。また、適切な.envファイルまたは環境変数の設定も必要です。
 
 ## Rust to Go Conversion
+実装の手順
+1. `go get google.golang.org/api/option` `go get google.golang.org/api/storage/v1`
+1. 構造体 `StorageQuery` を書く
+1. 構造体 `StorageResponse` を書く
+1. handler `storageHandler` を書く
+1. Handler を書く
+1. Handler をインスタンス化
+1. `main` を書く
+
 ```go
 package main
 
@@ -130,10 +162,6 @@ type StorageQuery struct {
 
 type StorageResponse struct {
 	Content string `json:"content"`
-}
-
-type ErrorResponse struct {
-	Error string `json:"error"`
 }
 
 func (h *Handler) storageHandler(w http.ResponseWriter, r *http.Request) {
