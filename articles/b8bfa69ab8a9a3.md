@@ -29,9 +29,9 @@ Rust/Go の API をスラスラ書けるようになるように、繰り返し�
 
 コードはこちら。
 
-https://github.com/danny-yamamoto/rust-api-samples
+https://github.com/danny-yamamoto/rust-api-samples/tree/main/Storage
 
-https://github.com/danny-yamamoto/go-api-samples
+https://github.com/danny-yamamoto/go-api-samples/tree/main/cmd/storage
 
 ## Rust Web Server: /storage
 実装の手順
@@ -139,7 +139,7 @@ storage_handler 関数はStorageQueryをクエリパラメータとして受け�
 1. Handler をインスタンス化
 1. `main` を書く
 
-```go
+```go:main.go
 package main
 
 import (
