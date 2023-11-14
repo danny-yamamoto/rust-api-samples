@@ -13,3 +13,13 @@ pub struct User {
 pub struct UserQuery {
     pub user_id: i64,
 }
+
+#[derive(Deserialize)]
+pub struct StorageQuery {
+    pub bucket: String,
+    pub object: String,
+}
+
+pub struct  StorageResponse {
+    pub content: String,
+}
