@@ -20,6 +20,7 @@ pub struct StorageQuery {
     pub object: String,
 }
 
+#[derive(Serialize)]
 pub struct  StorageResponse {
     pub content: String,
 }
