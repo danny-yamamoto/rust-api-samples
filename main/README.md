@@ -21,6 +21,10 @@ echo $SERVICE_ACCOUNT
 ```
 
 ```bash
+cargo sqlx prepare --database-url "sqlite:./local.db"
+```
+
+```bash
 vscode ➜ /workspaces/rust-api-samples (main) $ curl "localhost:8080/users?user_id=1" -i
 HTTP/1.1 200 OK
 content-type: application/json
