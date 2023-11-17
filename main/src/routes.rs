@@ -47,10 +47,25 @@ impl UserService {
     }
 }
 
-pub async fn storage_handler(Query(query):Query<StorageQuery>) -> impl IntoResponse {
-    let client = Client::default();
-    match client.object().download(&query.bucket, &query.object).await {
-        Ok(bytes) => ApiResponse::StorageResponse(StorageResponse { content: String::from_utf8_lossy(&bytes).to_string() }),
+pub async fn storage_handler(Query(query):Query<StorageQuery>, Extension(storage_service):Extension<Arc<StorageService>>) -> impl IntoResponse {
+    match storage_service.download_content(&query).await {
+        Ok(content) => ApiResponse::StorageResponse(content),
         Err(error) => ApiResponse::ErrorResponse(error.to_string()),
+    }
+}
+
+pub struct StorageService;
+
+impl StorageService {
+    pub fn new() -> Self {
+        StorageService {}
+    }
+
+    pub async fn download_content(&self, query: &StorageQuery) -> Result<StorageResponse, String> {
+        let client = Client::default();
+        match client.object().download(&query.bucket, &query.object).await {
+            Ok(bytes) => Ok(StorageResponse { content: String::from_utf8_lossy(&bytes).to_string() }),
+            Err(error) => Err(error.to_string()),
+        }
     }
 }
