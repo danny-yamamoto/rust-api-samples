@@ -69,3 +69,28 @@ impl StorageService {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_api_response_users() {
+        let user = User {
+            user_id: 9999,
+            email_address: Some("hoge@example.com".to_string()),
+            created_at: Some(0),
+            deleted: Some(0),
+            settings: Some("option".to_string()),
+        };
+        let response = ApiResponse::UserResponse(Some(user)).into_response();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn err_api_response_users() {
+        let user = "error".to_string();
+        let response = ApiResponse::ErrorResponse(user).into_response();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+}
