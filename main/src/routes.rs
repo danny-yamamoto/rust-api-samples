@@ -93,4 +93,24 @@ mod tests {
         let response = ApiResponse::ErrorResponse(user).into_response();
         assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
+
+}
+
+#[cfg(test)]
+mod users_service_tests {
+    use sqlx::SqlitePool;
+    use crate::routes::UserService;
+
+    #[tokio::test]
+    async fn test_fetch_users() {
+        let pool = SqlitePool::connect("sqlite:./unit_test.db").await.expect("Failed to connect to database.");
+        let service = UserService::new(pool);
+        let user_id = 10000;
+        let result = service.fetch_user(user_id).await;
+        assert!(result.is_ok());
+        let user = result.unwrap();
+        assert!(user.is_some());
+        let row = user.unwrap();
+        assert_eq!(row.email_address, Some("marc@example.com".to_string()));
+    }
 }
