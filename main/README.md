@@ -55,3 +55,10 @@ date: Wed, 15 Nov 2023 04:52:32 GMT
 "Other(\"No such object: sanbox-334000_bucket/test.htm\")\n"
 vscode ➜ /workspaces/rust-api-samples (main) $
 ```
+
+```sql
+CREATE TABLE IF NOT EXISTS users ( user_id INTEGER PRIMARY KEY, email_address TEXT, created_at INTEGER, deleted INTEGER, settings TEXT);
+INSERT INTO users (user_id, email_address, created_at, deleted, settings) VALUES (1, 'maria@example.com', 0, 0, '');
+INSERT INTO users (user_id, email_address, created_at, deleted, settings) VALUES (100, 'alex@example.com', 1, 0, '');
+INSERT INTO users (user_id, email_address, created_at, deleted, settings) VALUES (10000, 'marc@example.com', 0, 1, '');
+```
