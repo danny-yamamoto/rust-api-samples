@@ -98,6 +98,7 @@ mod tests {
 
 #[cfg(test)]
 mod users_service_tests {
+    use serde::{Serialize, Deserialize};
     use sqlx::SqlitePool;
     use crate::routes::UserService;
 
@@ -112,5 +113,31 @@ mod users_service_tests {
         assert!(user.is_some());
         let row = user.unwrap();
         assert_eq!(row.email_address, Some("marc@example.com".to_string()));
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    struct TestCase {
+		name: String,
+		user_id: i64,
+		expected_json: String,
+    }
+
+    #[tokio::test]
+    async fn tdt_fetch_users() {
+        let pool = SqlitePool::connect("sqlite:./unit_test.db").await.expect("Failed to connect to database.");
+        let service = UserService::new(pool);
+        let tests = vec![
+            TestCase { name: "Normal pattern a".to_string(), user_id: 10000, expected_json: "{\"user_id\":10000,\"email_address\":\"marc@example.com\",\"created_at\":0,\"deleted\":1,\"settings\":\"\"}".to_string() },
+            TestCase { name: "Normal pattern b".to_string(), user_id: 100, expected_json: "{\"user_id\":100,\"email_address\":\"alex@example.com\",\"created_at\":1,\"deleted\":0,\"settings\":\"\"}".to_string() }
+        ];
+
+        for tc in tests {
+            let user_id = tc.user_id;
+            let result = service.fetch_user(user_id).await;
+            assert!(result.is_ok());
+            let user_data = result.unwrap();
+            let user_json = serde_json::to_string(&user_data).expect("error");
+            assert_eq!(user_json, tc.expected_json, "Failed: {}", tc.name);
+        }
     }
 }
